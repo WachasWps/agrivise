@@ -12,7 +12,7 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 logging.basicConfig(level=logging.INFO)
 
 # Folder path where all CSV files are stored (adjust for your file structure)
-folder_path = "/content/drive/MyDrive/VEGE DATA SIH/finalCSVPrice"
+folder_path = "finalCSVPrice"
 
 # Function to prepare the dataset
 def prepare_data(state_name, data_path):
