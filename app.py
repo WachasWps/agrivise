@@ -1,11 +1,10 @@
 import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from statsmodels.tsa.arima.model import ARIMA
 import pandas as pd
 import os
 from datetime import datetime
-from pmdarima import auto_arima
-import requests
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -14,7 +13,7 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 logging.basicConfig(level=logging.INFO)
 
 # Folder path where all CSV files are stored (adjust for your file structure)
-folder_path = "/content/drive/MyDrive/VEGE DATA SIH/finalCSVPrice"
+folder_path = "finalCSVPrice"
 
 # Function to prepare the dataset
 def prepare_data(state_name, data_path):
@@ -48,10 +47,13 @@ def predict_price_arima(date_to_predict, state_name, commodity_name):
     # Calculate the steps between the last date in the series and the forecast date
     steps = (forecast_date - ts.index[-1]).days
 
-    # Fit the ARIMA model using pmdarima
-    model = auto_arima(ts, seasonal=False, stepwise=True)
-    forecast = model.predict(n_steps=steps)
-    return forecast[-1]
+    # Fit the ARIMA model
+    model = ARIMA(ts, order=(5, 0, 3))
+    model_fit = model.fit()
+
+    # Forecast the price
+    forecast = model_fit.forecast(steps=steps)
+    return forecast.iloc[-1]
 
 # Route to handle predictions
 @app.route('/predict', methods=['POST'])
@@ -73,6 +75,5 @@ def predict_price():
         app.logger.error(f"Exception occurred during prediction: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
 
-# For Vercel, expose the WSGI callable as 'app'
 if __name__ == "__main__":
-    app.run()
+    app.run(host="0.0.0.0", port=5000)
