@@ -38,6 +38,9 @@ def predict_price_arima(date_to_predict, state_name, commodity_name):
         # Construct the file path based on the commodity name
         file_path = os.path.join(folder_path, f"{commodity_name}.csv")
 
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+
         # Prepare the time series data
         ts = prepare_data(state_name, file_path)
 
@@ -84,4 +87,4 @@ def predict_price():
 
 # For Vercel, expose the WSGI callable as 'app'
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
