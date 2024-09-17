@@ -1,16 +1,15 @@
-import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from statsmodels.tsa.arima.model import ARIMA
 import pandas as pd
+import logging
 import os
-from datetime import datetime
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins, adjust as necessary
 
-# Logging setup
-logging.basicConfig(level=logging.DEBUG)
+# Set up logging
+logging.basicConfig(level=logging.INFO)
 
 # Folder path where all CSV files are stored (adjust for your file structure)
 folder_path = "finalCSVPrice"
@@ -34,21 +33,14 @@ def prepare_data(state_name, data_path):
 # Function to predict price using ARIMA
 def predict_price_arima(date_to_predict, state_name, commodity_name):
     try:
-        # Construct the file path based on the commodity name
         file_path = os.path.join(folder_path, f"{commodity_name}.csv")
-        # Prepare the time series data
         ts = prepare_data(state_name, file_path)
-        # Convert the prediction date to a datetime object
         forecast_date = pd.to_datetime(date_to_predict)
-        # Check if the prediction date is valid
         if forecast_date <= ts.index[-1]:
             raise ValueError(f"The prediction date must be after the last available date in the data: {ts.index[-1].date()}")
-        # Calculate the steps between the last date in the series and the forecast date
         steps = (forecast_date - ts.index[-1]).days
-        # Fit the ARIMA model
         model = ARIMA(ts, order=(5, 0, 3))
         model_fit = model.fit()
-        # Forecast the price
         forecast = model_fit.forecast(steps=steps)
         return forecast.iloc[-1]
     except Exception as e:
@@ -71,6 +63,5 @@ def predict_price():
         app.logger.error(f"Exception occurred during prediction: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
 
-# For Vercel, expose the WSGI callable as 'app'
-if __name__ == "__main__":
-    app.run()
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
